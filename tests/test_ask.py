@@ -36,3 +36,11 @@ def test_interactive_mode_reuses_chat_for_follow_up_questions(monkeypatch, capsy
     assert chat.questions == ["最初の質問", "続けて質問"]
     assert client.closed
     assert capsys.readouterr().out.count("回答") == 2
+
+
+def test_ask_prints_response_time(monkeypatch, capsys):
+    timestamps = iter([10.0, 11.25])
+    monkeypatch.setattr(ask_module.time, "perf_counter", lambda: next(timestamps))
+
+    assert ask_module.ask(FakeChat(), "質問") == "回答"
+    assert "[応答時間] 1.25秒" in capsys.readouterr().out
