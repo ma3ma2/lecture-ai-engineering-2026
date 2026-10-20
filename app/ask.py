@@ -25,7 +25,7 @@ DEFAULT_QUESTION = "AIE2026の講座の宿題にある「3レベル」とは何�
 
 def create_chat():
     client = genai.Client(api_key=get_api_key())
-    return client.chats.create(model=MODEL)
+    return client, client.chats.create(model=MODEL)
 
 
 def ask(chat, question: str) -> str:
@@ -48,8 +48,9 @@ def main() -> None:
     args = parser.parse_args()
 
     print(f"[model] {MODEL}")
+    client = None
     try:
-        chat = create_chat()
+        client, chat = create_chat()
         if args.interactive:
             if args.question:
                 print(f"[質問] {args.question}\n")
@@ -70,6 +71,9 @@ def main() -> None:
     except errors.APIError as e:
         print(api_error_message(e.code, e.message))
         raise SystemExit(1)
+    finally:
+        if client is not None:
+            client.close()
 
 
 if __name__ == "__main__":
