@@ -13,6 +13,7 @@
 """
 
 import argparse
+import time
 
 from google import genai
 from google.genai import errors
@@ -29,7 +30,12 @@ def create_chat():
 
 
 def ask(chat, question: str) -> str:
-    response = chat.send_message(question)
+    started_at = time.perf_counter()
+    try:
+        response = chat.send_message(question)
+    finally:
+        elapsed = time.perf_counter() - started_at
+        print(f"[応答時間] {elapsed:.2f}秒")
 
     usage = response.usage_metadata
     if usage is not None:
