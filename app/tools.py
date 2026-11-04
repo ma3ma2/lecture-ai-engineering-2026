@@ -5,10 +5,13 @@
 """
 
 import json
+from datetime import datetime
 from functools import cache
 from pathlib import Path
 
 DATA_DIR = Path(__file__).resolve().parent.parent / "data"
+# 第3回 宿題（実装）: 学習の記録の保存先。.gitignore 済み（個人のログは共有しない）
+LEARNING_LOG_DIR = Path(__file__).resolve().parent.parent / "learning_log"
 MAX_RESULTS = 3
 
 
@@ -77,3 +80,29 @@ def get_lecture_summary(lecture: int) -> str:
         available = sorted(p.stem for p in (DATA_DIR / "lectures").glob("*.md"))
         return f"第{lecture}回の要点はまだありません。用意されている回: {', '.join(available)}"
     return path.read_text(encoding="utf-8")
+
+
+def save_learning_log(title: str, content: str) -> str:
+    """学習の記録を learning_log/ フォルダに Markdown ファイルとして保存する。
+
+    利用者が「今日学んだことを記録して」「この内容をメモして」のように、
+    学習の記録を残すよう頼んだときだけ使う。頼まれていないのに使わないこと。
+    title には記録の短い見出し（例: "LoRAとQLoRAの違い"）、
+    content には記録する本文（学んだこと・疑問など）を入れる。
+    保存の前に利用者の確認が入る。
+    """
+    if not title.strip() or not content.strip():
+        return "title と content の両方を指定してください。保存していません。"
+    LEARNING_LOG_DIR.mkdir(parents=True, exist_ok=True)
+    now = datetime.now()
+    # ファイル名に title を使うと、記号や長さで保存に失敗しうるので日時だけにする
+    path = LEARNING_LOG_DIR / f"{now:%Y%m%d-%H%M%S}.md"
+    suffix = 1
+    while path.exists():  # 同じ秒に2回保存しても上書きしない
+        path = LEARNING_LOG_DIR / f"{now:%Y%m%d-%H%M%S}-{suffix}.md"
+        suffix += 1
+    path.write_text(
+        f"# {title.strip()}\n\n- 日時: {now:%Y-%m-%d %H:%M}\n\n{content.strip()}\n",
+        encoding="utf-8",
+    )
+    return f"学習の記録を保存しました: learning_log/{path.name}"
