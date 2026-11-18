@@ -145,7 +145,11 @@ def print_trace(result, elapsed_seconds: float | None = None) -> None:
             if isinstance(part, ToolCallPart):
                 print(f"[tool call]   {part.tool_name}({part.args})")
             elif isinstance(part, ToolReturnPart):
-                if part.tool_name == "browse_tree":
+                if part.tool_name == "search_materials":
+                    data = json.loads(part.content)
+                    hits = [hit.get("page_id") for hit in data.get("results", [])]
+                    print(f"[tool return] {part.tool_name} -> {len(hits)}件: {', '.join(hits)}")
+                elif part.tool_name == "browse_tree":
                     data = json.loads(part.content)
                     if "error" in data:
                         print(f"[tool return] {part.tool_name} -> {data['error']}")
