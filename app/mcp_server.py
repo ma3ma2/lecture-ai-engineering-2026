@@ -30,6 +30,36 @@ server.tool()(tools.search_glossary)
 # TODO(宿題・基礎): get_lecture_summary も公開しよう
 server.tool()(tools.get_lecture_summary)
 
+
+@server.tool()
+def make_quiz(lecture: int) -> str:
+    """指定した回の講義内容からクイズを1問作る。
+
+    「第2回のクイズを作って」のように頼まれたときに使う。
+    lecture には回の番号を指定する。
+    """
+    path = tools.DATA_DIR / "lectures" / f"{lecture:02d}.md"
+    if not path.exists():
+        available = ", ".join(
+            sorted(p.stem for p in (tools.DATA_DIR / "lectures").glob("*.md"))
+        )
+        return f"第{lecture}回の講義資料はありません。クイズを作れる回: {available}"
+
+    text = path.read_text(encoding="utf-8")
+    goals = text.partition("## この回のねらい")[2].partition("\n## ")[0]
+    first_goal = next(
+        (line[2:].strip() for line in goals.splitlines() if line.startswith("- ")),
+        None,
+    )
+    if first_goal is None:
+        return f"第{lecture}回の講義資料から、クイズに使う内容を見つけられませんでした。"
+
+    return (
+        f"問題：第{lecture}回で学ぶ内容を1つ答えてください。\n"
+        f"解答例：{first_goal}"
+    )
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description="用語集 MCP サーバー")
     parser.add_argument("--http", action="store_true", help="Streamable HTTP で起動する（既定は stdio）")
